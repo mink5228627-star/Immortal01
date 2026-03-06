@@ -1,213 +1,78 @@
-<!--
-Project: multi-redirect-demo
-Files included below (save each section as a separate .html file):
- - index.html   -> main page with input; when correct secret entered, opens/sends to two target pages
- - site1.html   -> demo receiving page 1 (reads query string and displays payload)
- - site2.html   -> demo receiving page 2 (reads query string and displays payload)
-
-Instructions:
-1. Copy each file block (the HTML between the comments <!-- FILE: filename --> ... ) into separate files with the given names.
-2. Open index.html in your browser (or host on any static host like GitHub Pages).
-3. Edit SECRET_CODE and TARGETS in index.html to your desired secret and target URLs.
-
-Notes:
-- The demo opens the target pages in new tabs with the value passed via query string.
-- It also attempts to POST the value via fetch to each target URL. That POST will fail if the target server does not allow CORS for your origin.
-- For simple static hosting (GitHub Pages, local files), the query-string method always works for passing the value.
--->
-
-<!-- FILE: index.html -->
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>값 입력 후 2개 사이트로 전송 — Demo</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<title>Satellite Call</title>
+
+<style>
+body{
+    margin:0;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    background:#0f172a;
+    font-family:sans-serif;
+    color:white;
+}
+
+h1{
+    position:absolute;
+    top:40px;
+    font-size:28px;
+    font-weight:600;
+}
+
+#codeInput{
+    width:500px;
+    max-width:80%;
+    padding:18px 20px;
+    font-size:20px;
+    border:none;
+    border-radius:10px;
+    outline:none;
+    text-align:center;
+}
+</style>
 </head>
-<body class="bg-slate-50 min-h-screen flex items-center justify-center">
-  <main class="max-w-xl w-full p-6">
-    <div class="bg-white shadow-lg rounded-2xl p-6">
-      <h1 class="text-2xl font-semibold mb-2">값 입력 후 2개 사이트로 전송</h1>
-      <p class="text-sm text-slate-500 mb-4">아래 입력창에 특정값을 입력하면 두 개의 사이트를 새 탭으로 열고(쿼리스트링) POST 요청을 시도합니다.</p>
 
-      <label class="block text-sm font-medium text-slate-700">값</label>
-      <input id="inputValue" class="mt-2 mb-4 w-full block rounded-lg border px-3 py-2" placeholder="값을 입력하세요" />
+<body>
 
-      <div class="flex gap-2">
-        <button id="sendBtn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">전송</button>
-        <button id="clearBtn" class="px-4 py-2 rounded-lg bg-slate-100">지우기</button>
-      </div>
+<h1>위성전화 전화걸기</h1>
 
-      <div id="msg" class="mt-4 text-sm"></div>
+<input 
+id="codeInput"
+type="text"
+placeholder="전화번호 입력"
+/>
 
-      <hr class="my-4" />
-      <details class="text-sm text-slate-600">
-        <summary class="cursor-pointer">설정 (개발자용)</summary>
-        <pre class="mt-2 bg-slate-100 p-3 rounded">// index.html 상단 스크립트에서 SECRET_CODE와 TARGETS를 수정하세요.</pre>
-      </details>
-    </div>
+<script>
+const input = document.getElementById("codeInput");
 
-    <footer class="mt-6 text-center text-xs text-slate-500">데모 — GitHub Pages나 로컬 파일에서 바로 테스트 가능</footer>
-  </main>
+input.addEventListener("keydown", function(e){
 
-  <script>
-    // === 설정 ===
-    // 원하는 비밀값(특정값)을 여기에 지정하세요.
-    const SECRET_CODE = 'OPEN123';
+    if(e.key === "Enter"){
 
-    // 전송할 대상(로컬 테스트용으로 site1.html, site2.html을 포함함). 실제 호스트 URL로 바꿔서 사용하세요.
-    const TARGETS = [
-      'site1.html',
-      'site2.html'
-    ];
-    // =============
+        const code = input.value.trim();
 
-    const input = document.getElementById('inputValue');
-    const sendBtn = document.getElementById('sendBtn');
-    const clearBtn = document.getElementById('clearBtn');
-    const msg = document.getElementById('msg');
+        if(code === "+8816XXXX8724"){
+            window.location.href = "page1.html";
+        }
 
-    function showMessage(text, kind = 'info'){
-      msg.textContent = text;
-      msg.className = kind === 'error' ? 'mt-4 text-sm text-red-600' : 'mt-4 text-sm text-green-600';
+        else if(code === "+8816XXXX0127"){
+            window.location.href = "page2.html";
+        }
+
+        else{
+            input.value = "";
+            input.placeholder = "연결 실패";
+        }
+
     }
 
-    clearBtn.addEventListener('click', () => {
-      input.value = '';
-      msg.textContent = '';
-    });
+});
+</script>
 
-    sendBtn.addEventListener('click', async () => {
-      const value = input.value.trim();
-      if(!value){
-        showMessage('값을 입력해 주세요.', 'error');
-        return;
-      }
-
-      if(value !== SECRET_CODE){
-        showMessage('입력값이 특정값과 일치하지 않습니다.', 'error');
-        return;
-      }
-
-      // 성공: 각 대상에 대해 쿼리스트링 + POST 요청(가능하면)
-      try{
-        TARGETS.forEach(target => {
-          // 쿼리스트링으로 새 탭 열기 (확실히 동작)
-          const urlWithParam = `${target}?value=${encodeURIComponent(value)}`;
-          window.open(urlWithParam, '_blank');
-
-          // 가능한 경우 POST 요청도 시도 (CORS 필요)
-          fetch(target, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ value })
-          }).then(res => {
-            // 만약 응답 텍스트가 필요하면 여기서 처리
-            console.log('POST to', target, 'status', res.status);
-          }).catch(err => {
-            console.warn('POST failed (probably CORS or target not accepting POST):', target, err);
-          });
-        });
-
-        showMessage('대상 사이트를 열고 전송을 시도했습니다. 새 탭을 확인하세요.');
-      }catch(e){
-        console.error(e);
-        showMessage('전송 중 오류가 발생했습니다.', 'error');
-      }
-    });
-
-    // 엔터로 제출 가능
-    input.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter') sendBtn.click();
-    });
-  </script>
-</body>
-</html>
-
-
-<!-- FILE: site1.html -->
-<!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Site 1 — 수신 페이지</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-white min-h-screen flex items-center justify-center">
-  <div class="max-w-lg w-full p-6">
-    <div class="rounded-xl shadow p-6">
-      <h2 class="text-xl font-medium">Site 1 — 값 수신 데모</h2>
-      <p class="text-sm text-slate-600 mt-2">쿼리스트링 또는 POST로 전달된 값을 아래에 표시합니다.</p>
-
-      <div class="mt-4 p-4 bg-slate-50 rounded">
-        <strong>받은 값:</strong>
-        <div id="received" class="mt-2 text-lg font-semibold text-slate-700">(없음)</div>
-      </div>
-
-      <div class="mt-4 text-xs text-slate-500">이 페이지는 데모용입니다. 실제 서버라면 POST 요청을 서버에서 처리합니다.</div>
-    </div>
-  </div>
-
-  <script>
-    function getQueryParam(name){
-      const params = new URLSearchParams(window.location.search);
-      return params.get(name);
-    }
-
-    // 쿼리스트링에서 'value' 읽기
-    const val = getQueryParam('value');
-    const received = document.getElementById('received');
-    if(val){
-      received.textContent = val;
-    }else{
-      received.textContent = '(쿼리스트링에 value가 없음)';
-    }
-
-    // 데모: POST로 데이터를 받는 서버가 있으면 여기에 코드가 필요합니다. 브라우저 상에서 직접 POST를 '받을' 수는 없습니다.
-  </script>
-</body>
-</html>
-
-
-<!-- FILE: site2.html -->
-<!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Site 2 — 수신 페이지</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-white min-h-screen flex items-center justify-center">
-  <div class="max-w-lg w-full p-6">
-    <div class="rounded-xl shadow p-6">
-      <h2 class="text-xl font-medium">Site 2 — 값 수신 데모</h2>
-      <p class="text-sm text-slate-600 mt-2">쿼리스트링 또는 POST로 전달된 값을 아래에 표시합니다.</p>
-
-      <div class="mt-4 p-4 bg-slate-50 rounded">
-        <strong>받은 값:</strong>
-        <div id="received" class="mt-2 text-lg font-semibold text-slate-700">(없음)</div>
-      </div>
-
-      <div class="mt-4 text-xs text-slate-500">이 페이지는 데모용입니다. 실제 서버라면 POST 요청을 서버에서 처리합니다.</div>
-    </div>
-  </div>
-
-  <script>
-    function getQueryParam(name){
-      const params = new URLSearchParams(window.location.search);
-      return params.get(name);
-    }
-
-    const val = getQueryParam('value');
-    const received = document.getElementById('received');
-    if(val){
-      received.textContent = val;
-    }else{
-      received.textContent = '(쿼리스트링에 value가 없음)';
-    }
-  </script>
 </body>
 </html>
