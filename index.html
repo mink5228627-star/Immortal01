@@ -50,13 +50,25 @@ placeholder="전화번호 입력"
 <script>
 const input = document.getElementById("codeInput");
 
+const blockedCalls = {
+    "112": "위성전화로는 경찰서에 전화를 걸 수 없습니다",
+    "119": "위성전화로는 소방서에 전화를 걸 수 없습니다",
+    "1336": "위성전화로는 도박 중독 상담을 할 수 없습니다"
+};
+
 input.addEventListener("keydown", function(e){
 
     if(e.key === "Enter"){
 
         const code = input.value.trim();
 
-        if(code === "+8816XXXX8724"){
+        if(blockedCalls[code]){
+            alert(blockedCalls[code]);
+            input.value = "";
+            input.placeholder = "전화번호 입력";
+        }
+
+        else if(code === "+8816XXXX8724"){
             window.location.href = "oracle.html";
         }
 
